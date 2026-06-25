@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PackMan OS - Hybrid Web OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            /* Dark Theme tokens */
+            --bg-blur: rgba(15, 15, 20, 0.6);
+            --bg-surface: rgba(28, 28, 36, 0.75);
+            --bg-surface-solid: #1c1c24;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-color: #f59e0b;
+            --accent-gradient: linear-gradient(135deg, #f59e0b, #ea580c);
+            --shadow-preset: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            --wallpaper: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop');
+        }
+
+        [data-theme="light"] {
+            /* Light Theme tokens */
+            --bg-blur: rgba(255, 255, 255, 0.6);
+            --bg-surface: rgba(243, 244, 246, 0.8);
+            --bg-surface-solid: #f3f4f6;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent-color: #ea580c;
+            --accent-gradient: linear-gradient(135deg, #ea580c, #f59e0b);
+            --shadow-preset: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            --wallpaper: url('https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1920&auto=format&fit=crop');
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: var(--font-sans);
+            color: var(--text-main);
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* Boot Screen Overlays */
+        #boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #09090b;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .boot-logo {
+            font-size: 48px;
+            color: #f59e0b;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(245, 158, 11, 0.2);
+            border-top: 3px solid #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.95); opacity: 0.8; } }
+
+        /* Desktop Container Contexts */
+        .desktop-container {
+            width: 100vw;
+            height: 100vh;
+            background: var(--wallpaper) center center / cover no-repeat;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.5s ease;
+        }
+
+        /* Status Bar (iOS Top Bar Hybrid Vibe) */
+        .status-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 9999;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+
+        .status-bar .right-metrics {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        /* Desktop Workspace Environment */
+        .desktop-space {
+            flex: 1;
+            position: relative;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+            grid-template-rows: repeat(auto-fill, minmax(105px, 1fr));
+            grid-auto-flow: column;
+            gap: 15px;
+            align-content: flex-start;
+        }
+
+        /* iOS-Style Icons Grid Layouts */
+        .app-shortcut {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            width: 95px;
+            height: 105px;
+            border-radius: 16px;
+            transition: background 0.2s, transform 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-shortcut:hover { background: rgba(255, 255, 255, 0.1); }
+        .app-shortcut:active { transform: scale(0.95); }
+
+        .app-icon-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: white;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+            margin-bottom: 6px;
+            position: relative;
+        }
+
+        .app-label {
+            font-size: 11px;
+            text-align: center;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            color: #ffffff;
+            max-width: 90px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Ripple Animation Class for Android UX Interaction */
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.35);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-effect 0.4s ease-out;
+            pointer-events: none;
+        }
+        @keyframes ripple-effect { to { transform: scale(4); opacity: 0; } }
+
+        /* Windows/Linux Windowing Engine Manager styles */
+        .window {
+            position: absolute;
+            width: 660px;
+            height: 460px;
+            min-width: 340px;
+            min-height: 260px;
+            background: var(--bg-surface);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-preset);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            animation: window-open 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        @keyframes window-open {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .window.maximized {
+            width: 100% !important;
+            height: calc(100vh - 80px) !important;
+            top: 30px !important;
+            left: 0 !important;
+            border-radius: 0;
+        }
+
+        .window-header {
+            height: 42px;
+            background: rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            cursor: move;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .window-title {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .win-btn {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: transparent;
+            transition: color 0.15s;
+        }
+        .window-header:hover .win-btn { color: rgba(0,0,0,0.6); }
+        .win-close { background: #ef4444; }
+        .win-max { background: #f59e0b; }
+        .win-min { background: #10b981; }
+
+        .window-body {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: transparent;
+        }
+
+        /* Taskbar or Control Dock Layout (Linux/Windows Fusion) */
+        .taskbar {
+            width: 100%;
+            height: 50px;
+            background: var(--bg-blur);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 9998;
+        }
+
+        .taskbar-dock {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 100%;
+            padding: 0 10px;
+        }
+
+        .dock-item {
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, margin 0.2s;
+        }
+
+        .dock-item:hover { transform: scale(1.15) translateY(-4px); }
+
+        .dock-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            width: 4px;
+            height: 4px;
+            background: var(--text-main);
+            border-radius: 50%;
+        }
+
+        .start-btn {
+            background: var(--accent-gradient);
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Windows/Linux Vibe Start Menu Panel */
+        .start-menu {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            width: 380px;
+            background: var(--bg-surface-solid);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            box-shadow: var(--shadow-preset);
+            padding: 18px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 10000;
+        }
+
+        .start-menu.open {
+            display: block;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .start-menu-profile {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 14px;
+        }
+
+        .profile-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .start-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .start-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .start-menu-item:hover { background: rgba(255,255,255,0.08); }
+        .start-menu-item i { font-size: 24px; margin-bottom: 8px; }
+
+        /* iOS / Android Style Control Center */
+        .control-center {
+            position: absolute;
+            top: 40px;
+            right: 16px;
+            width: 330px;
+            background: var(--bg-surface-solid);
+            border: 1px solid var(--border-color);
+            border-radius: 22px;
+            box-shadow: var(--shadow-preset);
+            padding: 20px;
+            display: none;
+            z-index: 10001;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .control-center.open { display: flex; }
+
+        .cc-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .cc-tile {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .cc-tile:active { transform: scale(0.98); }
+
+        .cc-tile.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: transparent;
+        }
+
+        .cc-tile i { font-size: 20px; }
+
+        .cc-slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cc-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.05);
+            padding: 12px 16px;
+            border-radius: 14px;
+        }
+
+        .cc-slider-row input {
+            flex: 1;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        /* APP VIEWPORTS: Terminal */
+        .terminal-container {
+            width: 100%;
+            height: 100%;
+            background: #09090b;
+            color: #34d399;
+            font-family: var(--font-mono);
+            padding: 16px;
+            font-size: 14px;
+        }
+
+        .terminal-history {
+            height: calc(100% - 25px);
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .terminal-input-line input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 14px;
+        }
+
+        /* APP VIEWPORTS: File Explorer System */
+        .explorer-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            background: rgba(0,0,0,0.02);
+        }
+
+        .explorer-sidebar {
+            width: 180px;
+            border-right: 1px solid var(--border-color);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sidebar-node {
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-node.active, .sidebar-node:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .explorer-main {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 18px;
+            align-content: flex-start;
+        }
+
+        .vfs-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: background 0.15s;
+        }
+
+        .vfs-item:hover { background: rgba(255,255,255,0.06); }
+        .vfs-item i { font-size: 40px; margin-bottom: 8px; }
+        .vfs-item.folder i { color: #f59e0b; }
+        .vfs-item.file i { color: #3b82f6; }
+        .vfs-item span { font-size: 12px; font-weight: 500; word-break: break-all; }
+
+        /* APP VIEWPORTS: Settings App UI Panel */
+        .settings-container {
+            width: 100%;
+            height: 100%;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .settings-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .settings-section h3 {
+            font-size: 14px;
+            margin-bottom: 14px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .wp-thumbs {
+            display: flex;
+            gap: 14px;
+        }
+
+        .wp-thumb {
+            width: 90px;
+            height: 56px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.15s;
+        }
+
+        .wp-thumb:hover { transform: scale(1.04); }
+        .wp-thumb.active { border-color: var(--accent-color); }
+
+        .sys-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        /* Native Runtime Code Compiler Downloader Component elements */
+        .download-action-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--accent-gradient);
+            padding: 16px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .download-action-card:hover { transform: translateY(-2px); }
+        .download-action-card div h4 { font-size: 15px; font-weight: 600; }
+        .download-action-card div p { font-size: 12px; opacity: 0.9; }
+        .download-action-card i { font-size: 24px; }
+
+        /* General File Viewer Element Overlays */
+        .text-view-container {
+            padding: 20px;
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        /* Resizing handles for Window engine controllers */
+        .resizer {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: transparent;
+            right: 0;
+            bottom: 0;
+            cursor: se-resize;
+        }
+
+        /* Responsive UI Layout Modifiers for Handheld Mobile Platforms */
+        @media (max-width: 768px) {
+            .window {
+                width: 100% !important;
+                height: calc(100vh - 80px) !important;
+                top: 30px !important;
+                left: 0 !important;
+                border-radius: 0;
+            }
+            .window-header .win-max { display: none; }
+            .explorer-sidebar { width: 110px; padding: 8px; }
+            .desktop-space {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                grid-template-rows: repeat(auto-fill, minmax(95px, 1fr));
+                gap: 12px;
+            }
+            .app-shortcut { width: 80px; height: 95px; }
+            .start-menu { width: calc(100% - 24px); bottom: 60px; }
+            .control-center { width: calc(100% - 24px); right: 12px; left: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen">
+        <i class="fa-solid fa-ghost boot-logo"></i>
+        <h2 style="color: #ffffff; font-size: 20px; font-weight: 600; letter-spacing: 1px;">PackMan OS</h2>
+        <div class="spinner"></div>
+    </div>
+
+    <div class="desktop-container" id="desktop">
+        
+        <div class="status-bar">
+            <div class="left-brand">
+                <strong style="cursor: pointer;" id="brand-trigger"><i class="fa-solid fa-ghost"></i> PackMan OS</strong>
+            </div>
+            <div class="right-metrics" id="cc-trigger">
+                <span id="live-clock">12:00 PM</span>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full"></i>
+            </div>
+        </div>
+
+        <div class="desktop-space" id="desktop-icons"></div>
+
+        <div class="taskbar">
+            <div class="taskbar-dock">
+                <div class="dock-item start-btn" id="start-menu-trigger">
+                    <i class="fa-solid fa-circle-nodes"></i>
+                </div>
+                <div id="dock-running-apps" style="display: flex; gap: 8px;"></div>
+            </div>
+        </div>
+
+        <div class="start-menu" id="start-panel">
+            <div class="start-menu-profile">
+                <div class="profile-avatar"><i class="fa-solid fa-user-shield"></i></div>
+                <div>
+                    <h4 style="font-size: 14px; color:#ffffff;">A-Shell Operator</h4>
+                    <p style="font-size: 11px; color: var(--text-muted);">Local Administrator</p>
+                </div>
+            </div>
+            <div class="start-menu-grid" id="start-menu-apps"></div>
+        </div>
+
+        <div class="control-center" id="cc-panel">
+            <h4 style="font-size: 14px; font-weight: 600; color: #ffffff;">Control Center</h4>
+            <div class="cc-grid">
+                <div class="cc-tile active" id="cc-toggle-wifi">
+                    <i class="fa-solid fa-wifi"></i>
+                    <div style="font-size: 11px; font-weight:500;">Wi-Fi<br><span style="opacity:0.75">Enabled</span></div>
+                </div>
+                <div class="cc-tile" id="cc-toggle-theme">
+                    <i class="fa-solid fa-moon"></i>
+                    <div style="font-size: 11px; font-weight:500;">Dark Mode<br><span id="theme-status-lbl" style="opacity:0.75">Active</span></div>
+                </div>
+            </div>
+            <div class="cc-slider-container">
+                <div class="cc-slider-row">
+                    <i class="fa-solid fa-sun" style="font-size:14px; color: #ffffff;"></i>
+                    <input type="range" min="25" max="100" value="100" id="cc-brightness">
+                </div>
+                <div class="cc-slider-row">
+                    <i class="fa-solid fa-volume-high" style="font-size:14px; color: #ffffff;"></i>
+                    <input type="range" min="0" max="100" value="80">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Virtual File System Mock Dataset Module
+        const VFS = {
+            root: {
+                "Project_Notes": {
+                    type: "folder",
+                    children: {
+                        "architecture.txt": { type: "file", content: "PackMan OS Core Architecture Specs:\n- Built entirely via iPhone a-Shell compiler deployment constraints.\n- Self-contained file handling pipeline encapsulation rules optimized.\n- Responsive CSS engine layout scaling configuration layer live." },
+                        "todo.txt": { type: "file", content: "Future Core Extension Implementations:\n1. Add binary web assembly memory allocations.\n2. Expand custom dynamic system config properties panels." }
+                    }
+                },
+                "System_Metrics": {
+                    type: "folder",
+                    children: {
+                        "kernel_init.log": { type: "file", content: "PACKMAN_OS_KERNEL_INIT [SUCCESS]\nSTORAGE: Virtual VFS Memory initialized safely.\nINTERFACE: Material Design Ripple Framework operational." }
+                    }
+                },
+                "welcome.txt": { type: "file", content: "Welcome to PackMan OS.\nAn impressive, single-file lightweight simulation operating environment built explicitly for showcasing on developer portfolios." }
+            }
+        };
+
+        // System App Registry Model Map configurations
+        const AppRegistry = {
+            explorer: { title: "File Explorer", icon: "fa-folder-open", color: "#f59e0b", render: () => initExplorer() },
+            terminal: { title: "A-Terminal", icon: "fa-terminal", color: "#10b981", render: () => initTerminal() },
+            settings: { title: "Settings", icon: "fa-sliders", color: "#4b5563", render: () => initSettings() },
+            downloader: { title: "Download Source", icon: "fa-cloud-arrow-down", color: "#ef4444", render: () => initDownloaderApp() }
+        };
+
+        // Global OS Engine Application Management Context States
+        const OS = {
+            activeWindows: [],
+            focusedWindow: null,
+            zIndexCounter: 100,
+            vfsCurrentDir: VFS.root,
+
+            init() {
+                // Simulate system hardware bootup verification pipeline sequences
+                setTimeout(() => {
+                    const bootScreen = document.getElementById('boot-screen');
+                    bootScreen.style.opacity = '0';
+                    setTimeout(() => bootScreen.remove(), 500);
+                }, 1800);
+
+                this.renderIconsAndMenus();
+                this.bindGlobalUIPanels();
+                this.startClockDaemon();
+                this.registerAndroidRippleListeners();
+            },
+
+            renderIconsAndMenus() {
+                const desktopGrid = document.getElementById('desktop-icons');
+                const startMenuGrid = document.getElementById('start-menu-apps');
+                desktopGrid.innerHTML = '';
+                startMenuGrid.innerHTML = '';
+
+                Object.keys(AppRegistry).forEach(appKey => {
+                    const app = AppRegistry[appKey];
+                    
+                    // Native Desktop Layout Elements Injection
+                    const dtItem = document.createElement('div');
+                    dtItem.className = 'app-shortcut';
+                    dtItem.onclick = () => this.launchApp(appKey);
+                    dtItem.innerHTML = `
+                        <div class="app-icon-wrapper" style="background: ${app.color};">
+                            <i class="fa-solid ${app.icon}"></i>
+                        </div>
+                        <div class="app-label">${app.title}</div>
+                    `;
+                    desktopGrid.appendChild(dtItem);
+
+                    // Start Menu Hybrid Layout Elements Injection
+                    const smItem = document.createElement('div');
+                    smItem.className = 'start-menu-item';
+                    smItem.onclick = () => { this.launchApp(appKey); toggleStartMenu(); };
+                    smItem.innerHTML = `
+                        <i class="fa-solid ${app.icon}" style="color:${app.color};"></i>
+                        <span style="font-size:12px; font-weight:500; color:#f3f4f6;">${app.title}</span>
+                    `;
+                    startMenuGrid.appendChild(smItem);
+                });
+            },
+
+            launchApp(appKey) {
+                const existing = this.activeWindows.find(w => w.id === appKey);
+                if (existing) {
+                    this.focusWindow(appKey);
+                    return;
+                }
+
+                const appMeta = AppRegistry[appKey];
+                const winEl = document.createElement('div');
+                winEl.className = 'window';
+                winEl.id = `win-${appKey}`;
+                
+                // Centered spatial distributions algorithm layouts based on current open counts
+                const offsets = this.activeWindows.length * 20;
+                winEl.style.top = `${80 + offsets}px`;
+                winEl.style.left = `${50 + offsets}px`;
+                
+                winEl.innerHTML = `
+                    <div class="window-header" onmousedown="OS.dragWindow(event, '${appKey}')" ontouchstart="OS.dragWindow(event, '${appKey}')">
+                        <div class="window-title">
+                            <i class="fa-solid ${appMeta.icon}" style="color:${appMeta.color};"></i>
+                            ${appMeta.title}
+                        </div>
+                        <div class="window-controls">
+                            <button class="win-btn win-min" onclick="OS.minimizeWindow('${appKey}')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="win-btn win-max" onclick="OS.maximizeWindow('${appKey}')"><i class="fa-solid fa-expand"></i></button>
+                            <button class="win-btn win-close" onclick="OS.closeWindow('${appKey}')"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    <div class="window-body">${appMeta.render()}</div>
+                    <div class="resizer" onmousedown="OS.resizeWindow(event, '${appKey}')" ontouchstart="OS.resizeWindow(event, '${appKey}')"></div>
+                `;
+
+                document.getElementById('desktop').appendChild(winEl);
+                this.activeWindows.push({ id: appKey, element: winEl, isMaximized: false });
+                this.focusWindow(appKey);
+                this.updateTaskbarState();
+            },
+
+            closeWindow(appKey) {
+                const winObj = this.activeWindows.find(w => w.id === appKey);
+                if (winObj) {
+                    winObj.element.remove();
+                    this.activeWindows = this.activeWindows.filter(w => w.id !== appKey);
+                    this.updateTaskbarState();
+                }
+            },
+
+            maximizeWindow(appKey) {
+                const winObj = this.activeWindows.find(w => w.id === appKey);
+                if (winObj) {
+                    if (winObj.isMaximized) {
+                        winObj.element.classList.remove('maximized');
+                        winObj.isMaximized = false;
+                    } else {
+                        winObj.element.classList.add('maximized');
+                        winObj.isMaximized = true;
+                    }
+                }
+            },
+
+            minimizeWindow(appKey) {
+                const winObj = this.activeWindows.find(w => w.id === appKey);
+                if (winObj) { winObj.element.style.display = 'none'; }
+            },
+
+            focusWindow(appKey) {
+                const winObj = this.activeWindows.find(w => w.id === appKey);
+                if (winObj) {
+                    this.zIndexCounter++;
+                    winObj.element.style.display = 'flex';
+                    winObj.element.style.zIndex = this.zIndexCounter;
+                    this.focusedWindow = appKey;
+                }
+            },
+
+            updateTaskbarState() {
+                const dockContainer = document.getElementById('dock-running-apps');
+                dockContainer.innerHTML = '';
+                this.activeWindows.forEach(win => {
+                    const appMeta = AppRegistry[win.id];
+                    const token = document.createElement('div');
+                    token.className = `dock-item active`;
+                    token.style.background = appMeta.color;
+                    token.onclick = () => this.focusWindow(win.id);
+                    token.innerHTML = `<i class="fa-solid ${appMeta.icon}"></i>`;
+                    dockContainer.appendChild(token);
+                });
+            },
+
+            dragWindow(e, appKey) {
+                const winObj = this.activeWindows.find(w => w.id === appKey);
+                if (!winObj || winObj.isMaximized) return;
+                this.focusWindow(appKey);
+
+                const isTouch = e.type === 'touchstart';
+                let clientX = isTouch ? e.touches[0].clientX : e.clientX;
+                let clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+                let pos1 = 0, pos2 = 0, pos3 = clientX, pos4 = clientY;
+                
+                const moveHandler = (moveEvent) => {
+                    let mX = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientX : moveEvent.clientX;
+                    let mY = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientY : moveEvent.clientY;
+                    
+                    pos1 = pos3 - mX;
+                    pos2 = pos4 - mY;
+                    pos3 = mX;
+                    pos4 = mY;
+                    winObj.element.style.top = `${winObj.element.offsetTop - pos2}px`;
+                    winObj.element.style.left = `${winObj.element.offsetLeft - pos1}px`;
+                };
+
+                const upHandler = () => {
+                    document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', moveHandler);
+                    document.removeEventListener(isTouch ? 'touchend' : 'mouseup', upHandler);
+                };
+
+                document.addEventListener(isTouch ? 'touchmove' : 'mousemove', moveHandler);
+                document.addEventListener(isTouch ? 'touchend' : 'mouseup', upHandler);
+            },
+
+            resizeWindow(e, appKey) {
+                e.preventDefault();
+                const winObj = this.activeWindows.find(w => w.id === appKey);
+                if (!winObj) return;
+                this.focusWindow(appKey);
+
+                const isTouch = e.type === 'touchstart';
+
+                const moveHandler = (moveEvent) => {
+                    let mX = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientX : moveEvent.clientX;
+                    let mY = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+                    const newWidth = mX - winObj.element.getBoundingClientRect().left;
+                    const newHeight = mY - winObj.element.getBoundingClientRect().top;
+                    if(newWidth > 340) winObj.element.style.width = `${newWidth}px`;
+                    if(newHeight > 260) winObj.element.style.height = `${newHeight}px`;
+                };
+
+                const upHandler = () => {
+                    window.removeEventListener(isTouch ? 'touchmove' : 'mousemove', moveHandler);
+                    window.removeEventListener(isTouch ? 'touchend' : 'mouseup', upHandler);
+                };
+
+                window.addEventListener(isTouch ? 'touchmove' : 'mousemove', moveHandler);
+                window.addEventListener(isTouch ? 'touchend' : 'mouseup', upHandler);
+            },
+
+            startClockDaemon() {
+                const clockEl = document.getElementById('live-clock');
+                const runClock = () => {
+                    const d = new Date();
+                    clockEl.innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                };
+                runClock();
+                setInterval(runClock, 1000);
+            },
+
+            bindGlobalUIPanels() {
+                document.getElementById('start-menu-trigger').addEventListener('click', (e) => {
+                    e.stopPropagation(); toggleStartMenu();
+                });
+                document.getElementById('cc-trigger').addEventListener('click', (e) => {
+                    e.stopPropagation(); toggleControlCenter();
+                });
+                document.getElementById('brand-trigger').addEventListener('click', (e) => {
+                    e.stopPropagation(); this.launchApp('settings');
+                });
+                document.getElementById('desktop').addEventListener('click', () => {
+                    document.getElementById('start-panel').classList.remove('open');
+                    document.getElementById('cc-panel').classList.remove('open');
+                });
+
+                document.getElementById('cc-brightness').addEventListener('input', (e) => {
+                    document.getElementById('desktop').style.filter = `brightness(${e.target.value}%)`;
+                });
+
+                document.getElementById('cc-toggle-theme').addEventListener('click', () => {
+                    const html = document.documentElement;
+                    const lbl = document.getElementById('theme-status-lbl');
+                    if (html.getAttribute('data-theme') === 'dark') {
+                        html.setAttribute('data-theme', 'light');
+                        lbl.innerText = "Inactive";
+                    } else {
+                        html.setAttribute('data-theme', 'dark');
+                        lbl.innerText = "Active";
+                    }
+                });
+            },
+
+            registerAndroidRippleListeners() {
+                document.addEventListener('click', function (e) {
+                    const match = e.target.closest('.app-shortcut, .cc-tile, .start-menu-item, .download-action-card');
+                    if (!match) return;
+                    
+                    const circle = document.createElement('div');
+                    const d = Math.max(match.clientWidth, match.clientHeight);
+                    circle.style.width = circle.style.height = d + 'px';
+                    
+                    const r = match.getBoundingClientRect();
+                    circle.style.left = e.clientX - r.left - d/2 + 'px';
+                    circle.style.top = e.clientY - r.top - d/2 + 'px';
+                    circle.className = 'ripple';
+                    
+                    match.appendChild(circle);
+                    setTimeout(() => circle.remove(), 400);
+                });
+            }
+        };
+
+        // --- BUILT-IN CORE APP LAYOUT CONTROLLERS ---
+
+        // App 1: Retro Command-Line Terminal Engine Terminal
+        function initTerminal() {
+            setTimeout(() => {
+                const input = document.getElementById('term-input');
+                if(input) {
+                    input.focus();
+                    input.addEventListener('keydown', processShellCommand);
+                }
+            }, 50);
+
+            return `
+                <div class="terminal-container">
+                    <div class="terminal-history" id="term-history">PackMan OS Native Linux-Shell Terminal Subsystem [v1.0.2]\nType 'help' to audit system capabilities map matrices.\n\n</div>
+                    <div class="terminal-input-line">
+                        <span>packman@os:~#</span>
+                        <input type="text" id="term-input" autocomplete="off" autocapitalize="none">
+                    </div>
+                </div>
+            `;
+        }
+
+        function processShellCommand(e) {
+            if (e.key !== 'Enter') return;
+            const inputEl = e.target;
+            const raw = inputEl.value.trim();
+            const cmd = raw.toLowerCase();
+            const history = document.getElementById('term-history');
+
+            history.innerHTML += `packman@os:~# ${raw}\n`;
+
+            if (cmd === 'help') {
+                history.innerHTML += "System Commands Shell Mapping:\n - help  : Renders available architectural functions\n - clear : Purges current console shell memory\n - about : Prints structural branding build tokens\n - ls    : Evaluates virtual file systems descriptors\n\n";
+            } else if (cmd === 'clear') {
+                history.innerHTML = '';
+            } else if (cmd === 'about') {
+                history.innerHTML += "PackMan OS Hybrid Environment Kernel Kernel v2026.1.1\nEngineered with performance parameters optimized for copy-paste portability onto iOS a-Shell.\n\n";
+            } else if (cmd === 'ls') {
+                history.innerHTML += "Type        Name\n----        ----\n<DIR>       Project_Notes\n<DIR>       System_Metrics\n<FILE>      welcome.txt\n\n";
+            } else if (cmd !== '') {
+                history.innerHTML += `packman-shell: execution failure: command '${raw}' not found inside environment mapping layers.\n\n`;
+            }
+
+            inputEl.value = '';
+            history.scrollTop = history.scrollHeight;
+        }
+
+        // App 2: Integrated File Explorer Interface
+        function initExplorer() {
+            setTimeout(() => evalVirtualDirectoryPath(), 50);
+            return `
+                <div class="explorer-container">
+                    <div class="explorer-sidebar">
+                        <div class="sidebar-node active" onclick="OS.vfsCurrentDir = VFS.root; evalVirtualDirectoryPath();">
+                            <i class="fa-solid fa-server"></i> FileSystem Root
+                        </div>
+                    </div>
+                    <div class="explorer-main" id="explorer-view"></div>
+                </div>
+            `;
+        }
+
+        function evalVirtualDirectoryPath() {
+            const grid = document.getElementById('explorer-view');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            Object.keys(OS.vfsCurrentDir).forEach(key => {
+                const node = OS.vfsCurrentDir[key];
+                const item = document.createElement('div');
+                item.className = `vfs-item ${node.type}`;
+                
+                if (node.type === 'folder') {
+                    item.innerHTML = `<i class="fa-solid fa-folder"></i><span>${key}</span>`;
+                    item.onclick = () => {
+                        OS.vfsCurrentDir = node.children;
+                        evalVirtualDirectoryPath();
+                    };
+                } else {
+                    item.innerHTML = `<i class="fa-solid fa-file-code"></i><span>${key}</span>`;
+                    item.onclick = () => triggerModalTextReader(key, node.content);
+                }
+                grid.appendChild(item);
+            });
+        }
+
+        function triggerModalTextReader(filename, content) {
+            const winEl = document.createElement('div');
+            winEl.className = 'window';
+            winEl.style.width = '420px';
+            winEl.style.height = '320px';
+            winEl.style.top = '140px';
+            winEl.style.left = '180px';
+            winEl.style.zIndex = OS.zIndexCounter + 10;
+            
+            winEl.innerHTML = `
+                <div class="window-header">
+                    <div class="window-title"><i class="fa-solid fa-file-lines"></i> CodeReader - ${filename}</div>
+                    <div class="window-controls">
+                        <button class="win-btn win-close" onclick="this.closest('.window').remove()"></button>
+                    </div>
+                </div>
+                <div class="window-body text-view-container" style="background:#111; color:#fff; font-family:var(--font-mono); font-size:13px;">${content.replace(/\n/g, '<br>')}</div>
+            `;
+            document.getElementById('desktop').appendChild(winEl);
+        }
+
+        // App 3: Control Settings System App configuration dashboard
+        function initSettings() {
+            setTimeout(() => {
+                const thumbs = document.querySelectorAll('.wp-thumb');
+                thumbs.forEach(t => {
+                    t.onclick = (e) => {
+                        thumbs.forEach(th => th.classList.remove('active'));
+                        e.target.classList.add('active');
+                        document.getElementById('desktop').style.backgroundImage = `url('${e.target.dataset.url}')`;
+                    }
+                });
+            }, 50);
+
+            return `
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h3><i class="fa-solid fa-desktop"></i> Desktop Customization Wallpaper Matrix</h3>
+                        <div class="wp-thumbs">
+                            <div class="wp-thumb active" data-url="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920" style="background-image:url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200')"></div>
+                            <div class="wp-thumb" data-url="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1920" style="background-image:url('https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=200')"></div>
+                            <div class="wp-thumb" data-url="https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=1920" style="background-image:url('https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=200')"></div>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3><i class="fa-solid fa-circle-info"></i> PackMan OS Build Identity Metrics</h3>
+                        <div class="sys-info-row"><span>Product Branding Token:</span><strong>PackMan OS Hybrid Environment</strong></div>
+                        <div class="sys-info-row"><span>Processor Platform Layer:</span><strong>Intel/ARM Simulated Hypervisor Web Virtualization Core</strong></div>
+                        <div class="sys-info-row"><span>Target Development Environment:</span><strong>iOS iPhone a-Shell Matrix Layer</strong></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // App 4: Built-in Source Code Self-Downloader Engine Core Module
+        function initDownloaderApp() {
+            return `
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h3><i class="fa-solid fa-code"></i> Source Code Engine Transpiler</h3>
+                        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px; line-height:1.5;">
+                            PackMan OS includes a self-contained runtime snapshot tracking compiler module. Clicking the compilation card block below builds the active DOM ecosystem structure layout rules tree into an offline playable standalone file distribution package instantly.
+                        </p>
+                        <div class="download-action-card" onclick="triggerNativeSourcePackageCompilation()">
+                            <div>
+                                <h4>Compile & Download Source</h4>
+                                <p>Generates index.html file package download links instantly</p>
+                            </div>
+                            <i class="fa-solid fa-download"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function triggerNativeSourcePackageCompilation() {
+            // Extracts current running ecosystem code mapping blocks
+            const entireSourceCodeString = document.documentElement.outerHTML;
+            const blobObj = new Blob([entireSourceCodeString], { type: 'text/html;charset=utf-8;' });
+            
+            const dlAnchorNode = document.createElement('a');
+            dlAnchorNode.href = URL.createObjectURL(blobObj);
+            dlAnchorNode.download = 'index.html';
+            document.body.appendChild(dlAnchorNode);
+            dlAnchorNode.click();
+            document.body.removeChild(dlAnchorNode);
+        }
+
+        // UI View Port Utility Controllers
+        function toggleStartMenu() {
+            const menu = document.getElementById('start-panel');
+            menu.classList.toggle('open');
+            document.getElementById('cc-panel').classList.remove('open');
+        }
+
+        function toggleControlCenter() {
+            const cc = document.getElementById('cc-panel');
+            cc.classList.toggle('open');
+            document.getElementById('start-panel').classList.remove('open');
+        }
+
+        // Initialize Native Core Execution Matrix
+        window.onload = () => OS.init();
+    </script>
+</body>
+</html>
